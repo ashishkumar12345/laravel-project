@@ -10,4 +10,9 @@ class HomeController extends Controller
     {
         return "Welcome to Home Page";
     }
+    public function contact()
+    {
+        return "Welcome to contact page";
+    }
+
 }
