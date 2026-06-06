@@ -1,4 +1,4 @@
-name: Laravel CI/CD Pipeline
+name: Laravel CI/CD Pipeline (Docker)
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -31,12 +32,13 @@ jobs:
       - name: Run tests
         run: php artisan test
 
+
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Azure VM via SSH
+      - name: Deploy Laravel using Docker on Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 98.70.41.71
@@ -44,15 +46,21 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /var/www/html/laravel-project
+
+            echo "Pulling latest code..."
             git fetch origin main
             git reset --hard origin/main
 
-            composer install --no-dev --optimize-autoloader
+            echo "Stopping old containers..."
+            docker-compose down -v
 
-            php artisan optimize:clear
-            php artisan migrate --force
+            echo "Building and starting containers..."
+            docker-compose up -d --build
 
-            php artisan config:cache
-            php artisan route:cache
+            echo "Running Laravel commands inside container..."
+            docker exec laravel-app php artisan migrate --force
+            docker exec laravel-app php artisan config:clear
+            docker exec laravel-app php artisan cache:clear
+            docker exec laravel-app php artisan route:cache
 
-            sudo systemctl restart nginx
+            echo "Deployment completed successfully 🚀"
