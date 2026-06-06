@@ -1,0 +1,33 @@
+services:
+
+  app:
+    build: .
+    container_name: laravel-app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
+  web:
+    image: nginx:latest
+    container_name: nginx-server
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: laravel_project
+      MYSQL_ROOT_PASSWORD: Admin@12345
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Admin@12345
+    ports:
+      - "3307:3306"
